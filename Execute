@@ -1,0 +1,49 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import random
+
+app = Flask(__name__)
+CORS(app)
+
+# Sample data for groups and students
+study_groups = {}
+students = {}
+
+def suggest_study_topics():
+    topics = ["Mathematics", "Physics", "Biology", "History", "Computer Science"]
+    return random.choice(topics)
+
+@app.route('/create_group', methods=['POST'])
+def create_group():
+    data = request.json
+    group_id = len(study_groups) + 1
+    study_groups[group_id] = {"name": data["name"], "members": [], "topics": []}
+    return jsonify({"message": "Group created successfully", "group_id": group_id})
+
+@app.route('/join_group', methods=['POST'])
+def join_group():
+    data = request.json
+    group_id = data["group_id"]
+    student_name = data["student_name"]
+    if group_id in study_groups:
+        study_groups[group_id]["members"].append(student_name)
+        return jsonify({"message": "Joined group successfully"})
+    return jsonify({"error": "Group not found"}), 404
+
+@app.route('/suggest_topic', methods=['GET'])
+def suggest_topic():
+    topic = suggest_study_topics()
+    return jsonify({"suggested_topic": topic})
+
+@app.route('/schedule_meeting', methods=['POST'])
+def schedule_meeting():
+    data = request.json
+    group_id = data["group_id"]
+    time = data["time"]
+    if group_id in study_groups:
+        study_groups[group_id]["meeting_time"] = time
+        return jsonify({"message": "Meeting scheduled successfully"})
+    return jsonify({"error": "Group not found"}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)
